@@ -21,4 +21,27 @@ export class CustomerController {
 
     res.json(customer);
   };
+
+  addAddress = async (req: Request, res: Response) => {
+    const { sub: userId } = req.auth;
+    const customer = await customerModel.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId: userId,
+      },
+      {
+        $push: {
+          addresses: {
+            text: req.body.address,
+            isDefault: false,
+          },
+        },
+      },
+      {
+        new: true,
+      },
+    );
+    // TODO:add login
+    return res.json(customer);
+  };
 }
