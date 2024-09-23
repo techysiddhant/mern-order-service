@@ -23,8 +23,11 @@ export class OrderController {
       );
     }
     const discountAmount = Math.round((totalPrice * discountPercentage) / 100);
+    const priceAfterDiscount = totalPrice - discountAmount;
+    const TAXES_PERCENTAGE = 18;
+    const taxes = Math.round((priceAfterDiscount * TAXES_PERCENTAGE) / 100);
 
-    res.json({ totalPrice, discountAmount });
+    res.json({ totalPrice, discountAmount, taxes });
   };
 
   private calculateTotal = async (cart: CartItem[]) => {
