@@ -7,13 +7,24 @@ import {
 } from "../types";
 import productCacheModel from "../productCache/productCacheModel";
 import toppingCacheModel from "../toppingCache/toppingCacheModel";
+import couponModel from "../coupon/couponModel";
 
 export class OrderController {
   create = async (req: Request, res: Response) => {
     // TODO: validate request
     const totalPrice = await this.calculateTotal(req.body.cart);
+    let discountPercentage = 0;
+    const couponCode = req.body.couponCode;
+    const tenantId = req.body.tenantId;
+    if (couponCode) {
+      discountPercentage = await this.getDiscountPercentage(
+        couponCode,
+        tenantId,
+      );
+    }
+    const discountAmount = Math.round((totalPrice * discountPercentage) / 100);
 
-    res.json({ totalPrice });
+    res.json({ totalPrice, discountAmount });
   };
 
   private calculateTotal = async (cart: CartItem[]) => {
@@ -80,5 +91,20 @@ export class OrderController {
       return topping.price;
     }
     return currentTopping.price;
+  };
+  private getDiscountPercentage = async (
+    couponCode: string,
+    tenantId: string,
+  ) => {
+    const code = await couponModel.findOne({ code: couponCode, tenantId });
+    if (!code) {
+      return 0;
+    }
+    const currentDate = new Date();
+    const couponDate = new Date(code.validUpto);
+    if (currentDate <= couponDate) {
+      return code.discount;
+    }
+    return 0;
   };
 }
