@@ -8,6 +8,8 @@ import {
 import productCacheModel from "../productCache/productCacheModel";
 import toppingCacheModel from "../toppingCache/toppingCacheModel";
 import couponModel from "../coupon/couponModel";
+import orderModel from "./orderModel";
+import { OrderStatus, PaymentStatus } from "./orderTypes";
 
 export class OrderController {
   create = async (req: Request, res: Response) => {
@@ -28,7 +30,23 @@ export class OrderController {
     const DELIVERY_CHARGES = 100;
     const taxes = Math.round((priceAfterDiscount * TAXES_PERCENTAGE) / 100);
     const finalTotal = priceAfterDiscount + taxes + DELIVERY_CHARGES;
-    res.json({ totalPrice, discountAmount, taxes, finalTotal });
+    // TODO: Problems....
+    const newOrder = await orderModel.create({
+      cart: req.body.cart,
+      couponCode,
+      tenantId,
+      customerId: req.body.customerId,
+      total: finalTotal,
+      discount: discountAmount,
+      taxes,
+      deliveryCharges: DELIVERY_CHARGES,
+      address: req.body.address,
+      comment: req.body.comment,
+      paymentMode: req.body.paymentMode,
+      orderStatus: OrderStatus.RECEIVED,
+      paymentStatus: PaymentStatus.PENDING,
+    });
+    res.json({ totalPrice, discountAmount, taxes, finalTotal, newOrder });
   };
 
   private calculateTotal = async (cart: CartItem[]) => {
